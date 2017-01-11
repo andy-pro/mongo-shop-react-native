@@ -18,10 +18,21 @@ import AutosuggestHighlightParse from 'autosuggest-highlight/parse'
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
+const initialState = {
+  title: '',
+  category: '',
+  amount: '',
+  cost: ''
+}
+
 export default class TransactionForm extends Component {
 
-  amountTypes = ['кг', 'г', 'шт', 'м.п.']
   fields = {}
+  state = initialState
+
+  amountTypes = ['кг', 'г', 'шт', 'м.п.']
+
+  onChange = data => this.setState(data)
 
   render() {
     // console.log('sugg render!!!');
@@ -33,17 +44,18 @@ export default class TransactionForm extends Component {
       }}>
 
         <AutosuggestInput
+          placeholder='Type a transaction title'
+          formField='title'
+          value={this.state.title}
           onChange={this.onChange}
           inputList={this.props.categories}
-          placeholder='Type a transaction title'
-          refInput={c => this.fields.title = c}
           getSuggestionValue={suggestion => suggestion.title}
           getSuggestions={(list, query) => getSuggestions(list, query, 1)}
           renderSuggestion={renderCategory}
           onSelect={suggestion => {
-            this.fields.category.setNativeProps({
-              text: suggestion.path_str.trim().replace(/\s*\/$/, '')
-            });
+            this.setState({
+              category: suggestion.path_str.trim().replace(/\s*\/$/, '')
+            })
             this.fields.amount.focus()
           }}
           focusOnSelect={false}
@@ -52,10 +64,11 @@ export default class TransactionForm extends Component {
         />
 
         <AutosuggestInput
+          placeholder='Type a transaction category'
+          formField='category'
+          value={this.state.category}
           onChange={this.onChange}
           inputList={this.props.categories}
-          placeholder='Type a transaction category'
-          refInput={c => this.fields.category = c}
           getSuggestionValue={suggestion => suggestion.path_str + suggestion.title}
           getSuggestions={(list, query) => getSuggestions(list, query, -1)}
           renderSuggestion={renderCategory}
@@ -65,26 +78,31 @@ export default class TransactionForm extends Component {
         <View style={{flexDirection: 'row'}}>
 
           <AutosuggestInput
+            placeholder='Amount'
+            formField='amount'
+            value={this.state.amount}
             onChange={this.onChange}
             inputList={this.amountTypes}
-            placeholder='Amount'
-            refInput={c => this.fields.amount = c}
             getSuggestionValue={(suggestion, query) => query + suggestion}
             getSuggestions={(list, query) =>
               query.charCodeAt(query.length - 1) === 32 ? list : []
             }
             renderSuggestion={renderAmount}
+            onSelect={() => this.fields.cost.focus()}
             styles={{...autoSuggestStyles, container: styles.flex}}
+            refInput={c => this.fields.amount = c}
             keyboardType='numeric'
           />
           <View style={styles.flex}>
             <TextInput
+              placeholder="Cost"
+              value={this.state.cost}
+              onChangeText={q => this.onChange({cost: q})}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="Cost"
               style={styles.input}
-              keyboardType='numeric'
               ref={c => this.fields.cost = c}
+              keyboardType='numeric'
               returnKeyType='done'
             />
           </View>
@@ -92,17 +110,17 @@ export default class TransactionForm extends Component {
         </View>
 
         <View style={styles.controls}>
-          <Icon.Button name="md-close-circle" backgroundColor="#3b5998" onPress={this.props.onClose}>
+          <Icon.Button name="md-close-circle" backgroundColor="#3b5998">
             Close
           </Icon.Button>
           <Text> </Text>
           <Icon.Button name="md-send" backgroundColor="#3b9859"
             onPress={() => {
               Alert.alert('formData',
-              this.fields.title._getText() +
-              this.fields.category._getText() +
-              this.fields.amount._getText() +
-              this.fields.cost._getText()
+              this.state.title +
+              this.state.category +
+              this.state.amount +
+              this.state.cost
             )
             }}>
             Submit
@@ -144,7 +162,7 @@ const renderCategory = (category, query) => {
   const matches = [[0, query.length]];
   const parts = AutosuggestHighlightParse(category.title, matches);
   return (
-    <View>
+    <View style={styles.suggestionView}>
       <Text style={styles.suggestion}>
         {category.path_str}
         {
@@ -162,7 +180,7 @@ const renderCategory = (category, query) => {
 }
 
 const renderAmount = amountType =>
-  <View style={{alignItems: 'flex-end'}}>
+  <View style={[styles.suggestionView, {alignItems: 'flex-end'}]}>
     <Text style={styles.suggestion}>
       {amountType}
     </Text>
@@ -170,44 +188,21 @@ const renderAmount = amountType =>
 
 const styles = StyleSheet.create({
 
-  overley: {
-    position: 'absolute',
-    // backgroundColor: '#ade',
-    // padding:10,
-    top: 55,
-    left: 0,
-    right: 0,
-    zIndex: 30,
-    maxHeight: 150,
-    flexDirection: 'row',
-    justifyContent: 'center'
-  },
-
-  container: {
-    // position: 'absolute',
-
-  },
-
   suggestions: {
-    backgroundColor: '#ddd',
-    maxHeight: 150,
+    backgroundColor: '#eee',
+    maxHeight: 148,
     marginHorizontal: 4,
-    // flexDirection: 'row',
-    // padding: 10,
     borderColor: '#09d',
     borderWidth: 1
   },
-
+  suggestionView: {
+    borderWidth: 1,
+    borderColor: '#ddd'
+  },
   suggestion: {
-    // position: 'absolute',
-    // backgroundColor: '#ade',
-    paddingVertical: 3,
+    paddingVertical: 4,
     paddingHorizontal: 10,
     fontWeight: 'bold'
-    // fontSize: 15
-    // top: 90,
-    // left: 70,
-    // zIndex: 30
   },
   highlight: {
     color: 'red'
@@ -217,22 +212,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingHorizontal: 10,
     paddingVertical: 3
-    // borderColor: '#09d',
-    // borderWidth: 1
-    // flex: 1,
-    // height: 45
   },
   controls: {
-    // flex: 0,
-    // height: 30,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    // alignItems: 'flex-end',
-    // padding: 0
   },
   inline: {
     flexDirection: 'row',
-    // justifyContent: 'flex-end',
   },
   flex: {
     flex: 1

@@ -1,4 +1,4 @@
-import { INCREMENT, DECREMENT, ADD_NEW_COUNTER } from './constants'
+import { SET_TRANSACTION_TYPE, INCREMENT, DECREMENT, ADD_NEW_COUNTER } from './constants'
 
 //each action should have the following signiture.
 //  {
@@ -8,6 +8,13 @@ import { INCREMENT, DECREMENT, ADD_NEW_COUNTER } from './constants'
 //                                    you don't need the payload. for example
 //                                    newCounter action
 //  }
+
+export const setTransactionType = (t) => {
+  return {
+    type: SET_TRANSACTION_TYPE,
+    payload: t
+  }
+}
 
 //this action tell the reducer which counter with specified id needs to be
 //incremented.
